@@ -46,7 +46,7 @@ public class OpenShiftUserResponse {
 			return "OpenShiftUserResponse - username not set";
 		}
 		
-		return new StringBuilder("OpenShiftUserResponse: name: ").append(metadata).append(" groups: ").append(groups).toString(); 
+		return "OpenShiftUserResponse: name: " + metadata + " groups: " + groups;
 	}
 	
 	public static void main( ) {
