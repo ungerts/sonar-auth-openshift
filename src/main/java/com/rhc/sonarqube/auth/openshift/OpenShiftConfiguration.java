@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.common.base.Splitter;
@@ -114,7 +115,9 @@ public class OpenShiftConfiguration {
 	}
 	
 	public String getApiURL() {
-		LOGGER.fine("API url: " + config.get(API_URL).orElse("API url not set"));
+		if (LOGGER.isLoggable(Level.FINE)) {
+			LOGGER.fine("API url: " + config.get(API_URL).orElse("API url not set"));
+		}
 		return config.get(API_URL).orElse(null);
 	}
 		
