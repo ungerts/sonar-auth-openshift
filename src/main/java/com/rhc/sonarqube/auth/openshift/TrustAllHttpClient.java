@@ -43,7 +43,7 @@ public class TrustAllHttpClient {
 			    }
 			};
 		
-		SSLContext trustAllSslContext = null;
+		SSLContext trustAllSslContext;
 		
 		try {
 	        trustAllSslContext = SSLContext.getInstance("SSL");
