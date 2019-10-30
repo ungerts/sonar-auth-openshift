@@ -33,7 +33,7 @@ public class OpenShiftUserResponse {
 		return groups.contains(groupName);
 	}
 	
-	public class MetaData {
+	public static class MetaData {
 		public String name;
 		
 		public String toString() {
