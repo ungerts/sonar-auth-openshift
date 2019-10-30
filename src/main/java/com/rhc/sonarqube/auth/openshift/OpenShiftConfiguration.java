@@ -173,12 +173,11 @@ public class OpenShiftConfiguration {
 	        .index(index)
 	        .build());	      
 	  }
-	 
-	 private String serviceAccountBufferReader(String directory) throws IOException{
-		    BufferedReader bufferReader = new BufferedReader(
-					new FileReader(new File(getOpenShiftServiceAccountDirectory(), directory)));	        
-		    String id = bufferReader.readLine();          	    
-		    bufferReader.close();		    
-			return id;
-	 }	
+
+	private String serviceAccountBufferReader(String directory) throws IOException {
+		try (BufferedReader bufferReader = new BufferedReader(
+				new FileReader(new File(getOpenShiftServiceAccountDirectory(), directory)))) {
+			return bufferReader.readLine();
+		}
+	}
 }
