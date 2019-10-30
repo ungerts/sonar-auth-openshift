@@ -17,7 +17,7 @@ import com.github.scribejava.core.model.Verb;
 public class MockHttpClient implements HttpClient{
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		// TODO Auto-generated method stub
 		
 	}
@@ -45,7 +45,7 @@ public class MockHttpClient implements HttpClient{
 
 	@Override
 	public Response execute(String userAgent, Map<String, String> headers, Verb httpVerb, String completeUrl,
-			byte[] bodyContents) throws InterruptedException, ExecutionException, IOException {
+			byte[] bodyContents) throws IOException {
 
 		if(completeUrl.contentEquals("http://127.0.0.1/apis/user.openshift.io/v1/users/~")) {
 			return new Response(200, "message", new HashMap<>(),
@@ -60,14 +60,14 @@ public class MockHttpClient implements HttpClient{
 
 	@Override
 	public Response execute(String userAgent, Map<String, String> headers, Verb httpVerb, String completeUrl,
-			String bodyContents) throws InterruptedException, ExecutionException, IOException {
+			String bodyContents) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Response execute(String userAgent, Map<String, String> headers, Verb httpVerb, String completeUrl,
-			File bodyContents) throws InterruptedException, ExecutionException, IOException {
+			File bodyContents) {
 		// TODO Auto-generated method stub
 		return null;
 	}
