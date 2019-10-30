@@ -65,30 +65,31 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 			initializedOpenshift = false;
 			LOGGER.severe("AuthOpenShiftPlugin failed to initialize. Disabling...");
 		}
-		
-		LOGGER.fine("OpenShift API " + scribeApi.toString());
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine("OpenShift API " + scribeApi.toString());
+        }
 	}
 
-	private void initOpenShift() throws Exception {
+	private void initOpenShift() throws IOException, GeneralSecurityException {
 
-		try {
-			setHttpClient();
-		} catch (Exception ex) {
-			LOGGER.log(Level.SEVERE, "Problem setting up ssl", ex);
-			throw ex;
-		}
+        try {
+            setHttpClient();
+        } catch (IOException | GeneralSecurityException ex) {
+            LOGGER.log(Level.WARNING, "Problem setting up ssl", ex);
+            throw ex;
+        }
 
 		try {
 			getServiceAccountName();
-		} catch (Exception ex) {
-			LOGGER.log(Level.SEVERE, "Problem getting service account", ex);
+		} catch (RuntimeException ex) {
+			LOGGER.log(Level.WARNING, "Problem getting service account", ex);
 			throw ex;
 		}
 
 		try {
 			todoCallback = this.callbackBaseUrl();
-		} catch (Exception ex) {
-			LOGGER.log(Level.SEVERE, "Problem getting callback url (based on pod's service)", ex);
+		} catch (RuntimeException ex) {
+			LOGGER.log(Level.WARNING, "Problem getting callback url (based on pod's service)", ex);
 			throw ex;
 		}
 	}
@@ -126,7 +127,9 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 
 			OAuth20Service scribe = newScribeBuilder().scope(config.getDefaultScope()).state(state).build(scribeApi);
 			String url = scribe.getAuthorizationUrl();
-			LOGGER.fine("Redirect:" + url);
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("Redirect:" + url);
+            }
 			context.redirectTo(url);
 		} catch (IOException e) {
 			LOGGER.severe("Unable to read/write client id and/or client secret from service account.");
@@ -169,7 +172,9 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 
 		for (String accessRole : config.getSARGroups().keySet()) {
 			if(user.isMemberOf(accessRole)) {
-				LOGGER.fine(String.format("Adding role %s", config.getSARGroups().get(accessRole)));
+			    if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine(String.format("Adding role %s", config.getSARGroups().get(accessRole)));
+                }
 				sonarRoles.add(config.getSARGroups().get(accessRole));
 				//LOGGER.fine(String.format("% has access to %s", user.getUserName(), config.getSARGroups().get(accessRole)));
 			}
@@ -207,7 +212,7 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 			String host = jsonObject.get("host").getAsString();
 			host = jsonObject.getAsJsonObject().has("tls") ? "https://" + host : "http://" + host;
 
-			LOGGER.info("Callback Host: " + host);
+			LOGGER.info(String.format("Callback Host: %s", host));
 
 			return host + "/oauth2/callback/openshift";
 		} catch (InterruptedException | ExecutionException ex) {
@@ -228,8 +233,10 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 			OpenShiftUserResponse user = getOpenShiftUser(scribe, token);
 			String userName = user.getUserName();
 			if (userName.contains(":")) {
-				config.setServicAccountName(userName.substring(userName.lastIndexOf(":") + 1));
-				LOGGER.info(String.format("Service account name '%s'", config.getServiceAccountName()));
+				config.setServicAccountName(userName.substring(userName.lastIndexOf(':') + 1));
+				if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.info(String.format("Service account name '%s'", config.getServiceAccountName()));
+                }
 			}
 		} catch (ExecutionException | InterruptedException e) {
 			throw new IllegalStateException("Unable to figure out service account name", e);
@@ -249,7 +256,9 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 					config.getUserURI(), response.getCode(), response.getBody()));
 		}
 		String json = response.getBody();
-		LOGGER.fine("User response body ===== " + json);
+		if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine(String.format("User response body ===== %s", json));
+        }
 		OpenShiftUserResponse user = OpenShiftUserResponse.create(json);
 		return user;
 	}
@@ -272,30 +281,34 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 
 			KeyStore keyStore = SecurityUtils.getDefaultKeyStore();
 			try {
-				LOGGER.fine("Keystore size " + keyStore.size());
+			    if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine("Keystore size " + keyStore.size());
+                }
 			} catch (Exception ex) {
 				keyStore.load(null);
 			}
 
-			FileInputStream fis = new FileInputStream(new File(config.getOpenShiftServiceAccountDirectory(), config.getCert()));
-			SecurityUtils.loadKeyStoreFromCertificates(keyStore, SecurityUtils.getX509CertificateFactory(), fis);
+			try (FileInputStream fis = new FileInputStream(new File(config.getOpenShiftServiceAccountDirectory(), config.getCert()))) {
+                SecurityUtils.loadKeyStoreFromCertificates(keyStore, SecurityUtils.getX509CertificateFactory(), fis);
 
-			fis = config.getOAuthCertFile();
+                FileInputStream oauthCertFileIs = config.getOAuthCertFile();
 
-			if(fis != null) {
-				LOGGER.info("Loading OAuth certificate");
-				SecurityUtils.loadKeyStoreFromCertificates(keyStore, SecurityUtils.getX509CertificateFactory(), fis);
-			}
+                if (oauthCertFileIs != null) {
+                    LOGGER.info("Loading OAuth certificate");
+                    SecurityUtils.loadKeyStoreFromCertificates(keyStore, SecurityUtils.getX509CertificateFactory(), oauthCertFileIs);
+                }
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine("Keystore loaded");
+                }
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
+                tmf.init(keyStore);
+                SSLContext ssl = SSLContext.getInstance("TLS");
+                ssl.init(Config.defaultClient().getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+                SSLContext.setDefault(ssl);
+                LOGGER.fine("SSL context set");
 
-			LOGGER.fine("Keystore loaded");
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
-			tmf.init(keyStore);
-			SSLContext ssl = SSLContext.getInstance("TLS");
-			ssl.init(Config.defaultClient().getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
-			SSLContext.setDefault(ssl);
-			LOGGER.fine("SSL context set");
-
-			okClient = new OkHttpClient.Builder().sslSocketFactory(ssl.getSocketFactory(), (X509TrustManager)tmf.getTrustManagers()[0]).build();
+                okClient = new OkHttpClient.Builder().sslSocketFactory(ssl.getSocketFactory(), (X509TrustManager) tmf.getTrustManagers()[0]).build();
+            }
 		}
 	}
 }
