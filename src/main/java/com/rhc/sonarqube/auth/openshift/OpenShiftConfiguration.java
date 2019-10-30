@@ -174,7 +174,7 @@ public class OpenShiftConfiguration {
 	        .build());	      
 	  }
 	 
-	 private String serviceAccountBufferReader(String directory) throws FileNotFoundException, IOException{				            
+	 private String serviceAccountBufferReader(String directory) throws IOException{
 		    BufferedReader bufferReader = new BufferedReader(
 					new FileReader(new File(getOpenShiftServiceAccountDirectory(), directory)));	        
 		    String id = bufferReader.readLine();          	    
