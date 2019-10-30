@@ -165,7 +165,7 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 
 	private Set<String> findSonarRoles(OpenShiftUserResponse user) {
 
-		HashSet<String> sonarRoles = new HashSet<String>();
+		HashSet<String> sonarRoles = new HashSet<>();
 
 		for (String accessRole : config.getSARGroups().keySet()) {
 			if(user.isMemberOf(accessRole)) {
@@ -227,7 +227,7 @@ public class OpenShiftIdentityProvider implements OAuth2IdentityProvider {
 		try {
 			OpenShiftUserResponse user = getOpenShiftUser(scribe, token);
 			String userName = user.getUserName();
-			if (userName.indexOf(":") >= 0) {
+			if (userName.contains(":")) {
 				config.setServicAccountName(userName.substring(userName.lastIndexOf(":") + 1));
 				LOGGER.info(String.format("Service account name '%s'", config.getServiceAccountName()));
 			}

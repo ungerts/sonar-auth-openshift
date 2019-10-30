@@ -58,12 +58,7 @@ public class TrustAllHttpClient {
 		
 		OkHttpClient okClient = new OkHttpClient.Builder()
 	    	.sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager)trustAllCerts[0])
-	    	.hostnameVerifier(new HostnameVerifier() {
-	      @Override
-	      public boolean verify(String hostname, SSLSession session) {
-	        return true;
-	      }
-	    }).build();
+	    	.hostnameVerifier((hostname, session) -> true).build();
 		
 		return okClient;
 	}
