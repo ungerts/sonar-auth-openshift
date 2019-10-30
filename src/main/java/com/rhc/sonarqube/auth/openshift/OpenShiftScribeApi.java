@@ -5,6 +5,7 @@ import org.sonar.api.server.ServerSide;
 import io.kubernetes.client.util.Config;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -17,7 +18,7 @@ import com.squareup.okhttp.Request;
 @ServerSide
 public class OpenShiftScribeApi extends DefaultApi20 {
 	
-	static final Logger LOGGER = Logger.getLogger(OpenShiftIdentityProvider.class.getName());
+	static final Logger LOGGER = Logger.getLogger(OpenShiftScribeApi.class.getName());
 
 	private String wellKnownDefaultUrl = "https://openshift.default.svc";
 	private String wellKnownURI = "/.well-known/oauth-authorization-server";
@@ -45,7 +46,9 @@ public class OpenShiftScribeApi extends DefaultApi20 {
 
 		com.squareup.okhttp.Response okresponse = ok.newCall(okrequest).execute();
 		String json = okresponse.body().string();
-		LOGGER.fine(String.format("Well known response: %s", json));
+		if (LOGGER.isLoggable(Level.FINE)) {
+			LOGGER.fine(String.format("Well known response: %s", json));
+		}
 
 		JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
 		issuer = jsonObject.get("issuer").getAsString();
@@ -62,13 +65,17 @@ public class OpenShiftScribeApi extends DefaultApi20 {
 
     @Override
     public String getAccessTokenEndpoint() {
-		LOGGER.fine("getting access token endpint " + token_endpoint);
+		if (LOGGER.isLoggable(Level.FINE)) {
+			LOGGER.fine(String.format("getting access token endpint %s", token_endpoint));
+		}
         return token_endpoint;
     }
 
     @Override
     protected String getAuthorizationBaseUrl() {
-		LOGGER.fine("getting auth endpint " + authorization_endpoint);
+		if (LOGGER.isLoggable(Level.FINE)) {
+			LOGGER.fine(String.format("getting auth endpint %s", authorization_endpoint));
+		}
         return authorization_endpoint;
     }
 
