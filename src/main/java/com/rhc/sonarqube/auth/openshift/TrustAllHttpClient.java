@@ -2,12 +2,9 @@ package com.rhc.sonarqube.auth.openshift;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.logging.Logger;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -22,12 +19,16 @@ import okhttp3.OkHttpClient;
 public class TrustAllHttpClient {
 	static final Logger LOGGER = Logger.getLogger(TrustAllHttpClient.class.getName());
 
+	private TrustAllHttpClient() {
+
+	}
+
 	
 	public static OkHttpClient instance() {
 		
 		final TrustManager[] trustAllCerts = new TrustManager[] {
 				new X509TrustManager() {
-					
+
 			        @Override
 			        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
 			        }
